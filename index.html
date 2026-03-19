@@ -3,257 +3,245 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>مغير أبعاد الصور - نسخة احترافية</title>
+<title>مغير أبعاد الصور</title>
+
 <style>
 body {
     margin:0;
-    font-family: Arial, sans-serif;
-    background: #0a0a23;
+    font-family: Arial;
+    background:#0a0a23;
     overflow-x:hidden;
 }
-canvas#starsCanvas{
-    position: fixed;
+
+/* النجوم */
+canvas{
+    position:fixed;
     top:0;
     left:0;
     z-index:-1;
 }
-.resizer {
-    background: rgba(255,255,255,0.95);
-    padding:30px;
-    border-radius:12px;
-    box-shadow:0 4px 25px rgba(0,0,0,0.3);
-    max-width:450px;
-    margin:50px auto;
+
+/* الكارد */
+.resizer{
+    background:rgba(255,255,255,0.08);
+    backdrop-filter: blur(10px);
+    border:1px solid rgba(255,255,255,0.2);
+    padding:25px;
+    border-radius:15px;
+    max-width:420px;
+    margin:40px auto;
     text-align:center;
 }
-h1 {
-    margin-bottom:20px;
-    color:#333;
-}
-#dropArea {
-    border:2px dashed #007bff;
-    border-radius:12px;
-    padding:20px;
-    cursor:pointer;
-    margin-bottom:15px;
-    transition: background 0.3s, border-color 0.3s;
-    color:#007bff;
-    font-weight:bold;
-}
-#dropArea.hover {
-    background:#e0f0ff;
-    border-color:#0056b3;
-}
-input[type="number"], select {
-    width:45%;
-    padding:10px;
-    margin:5px 2%;
-    border-radius:5px;
-    border:1px solid #ccc;
-    text-align:center;
-    font-size:16px;
-}
-img {
-    max-width:100%;
-    margin-top:15px;
-    border-radius:8px;
+
+/* الصورة */
+#outputImage{
+    width:100%;
+    border:4px solid #00bfff;
+    border-radius:10px;
     display:none;
-    border:4px solid #00bfff; /* اطار سمائي */
-    box-sizing:border-box;
-    background: rgba(255,255,255,0); /* شفافية خلفية */
+    margin-bottom:15px;
 }
-button {
-    margin-top:10px;
-    background-color:#007bff;
-    color:#fff;
-    padding:12px 20px;
-    border:none;
-    border-radius:8px;
+
+/* رفع */
+#dropArea{
+    border:2px dashed #00bfff;
+    padding:20px;
+    border-radius:10px;
     cursor:pointer;
-    font-size:16px;
+    color:#00bfff;
+    margin-bottom:10px;
 }
-button:hover {
-    background-color:#0056b3;
+
+/* مدخلات */
+input,select{
+    width:90%;
+    padding:10px;
+    margin:5px 0;
+    border-radius:6px;
+    border:none;
+    text-align:center;
 }
+
+/* زر تحميل متغير */
+#downloadBtn{
+    background:linear-gradient(45deg,#00bfff,#00ff88);
+    animation:grad 3s infinite alternate;
+    color:#fff;
+    border:none;
+    padding:12px;
+    width:90%;
+    border-radius:8px;
+    margin-top:10px;
+}
+
+@keyframes grad{
+    0%{filter:hue-rotate(0deg);}
+    100%{filter:hue-rotate(60deg);}
+}
+
+/* زر reset */
+#resetBtn{
+    background:#888;
+    color:#fff;
+    border:none;
+    padding:6px 10px;
+    border-radius:6px;
+    font-size:12px;
+    position:absolute;
+    top:10px;
+    left:10px;
+}
+
+/* footer */
 .footer{
     text-align:center;
     color:#fff;
-    margin:30px 0 50px;
-    font-size:14px;
+    margin-top:20px;
 }
+
 .footer a{
+    animation:colorChange 3s infinite alternate;
     text-decoration:none;
-    font-weight:bold;
-    animation: colorChange 3s infinite alternate;
 }
-@keyframes colorChange {
-    0% { color: white; }
-    50% { color: #4CAF50; }
-    100% { color: #00f; }
+
+@keyframes colorChange{
+    0%{color:#fff;}
+    50%{color:#4CAF50;}
+    100%{color:#00f;}
 }
+
+/* موبايل */
 @media(max-width:500px){
     .resizer{
         width:90%;
-        padding:20px;
-    }
-    input[type="number"], select{
-        width:90%;
-        margin:5px 0;
     }
 }
 </style>
 </head>
+
 <body>
 
-<canvas id="starsCanvas"></canvas>
+<canvas id="stars"></canvas>
 
 <div class="resizer">
-    <h1>مغير أبعاد الصور</h1>
-    <div id="dropArea">اسحب وأسقط الصورة هنا أو اضغط للاختيار</div>
-    <input type="number" id="widthInput" placeholder="العرض (px)">
-    <input type="number" id="heightInput" placeholder="الارتفاع (px)">
-    <br>
-    <select id="formatSelect">
-        <option value="png">PNG</option>
-        <option value="jpeg">JPEG</option>
-        <option value="webp">WebP</option>
-        <option value="bmp">BMP</option>
-        <option value="gif">GIF</option>
-    </select>
-    <br>
-    <button id="downloadBtn" style="display:none;">تحميل الصورة</button>
-    <button id="resetBtn" style="display:none;">إعادة تعيين</button>
-    <img id="outputImage" src="" alt="الصورة المعدلة">
+
+<button id="resetBtn" style="display:none;">Reset</button>
+
+<img id="outputImage">
+
+<div id="dropArea">اضغط لاختيار صورة</div>
+
+<input type="number" id="w" placeholder="العرض">
+<input type="number" id="h" placeholder="الارتفاع">
+
+<select id="format">
+<option value="png">PNG</option>
+<option value="jpeg">JPEG</option>
+<option value="webp">WebP</option>
+<option value="bmp">BMP</option>
+<option value="gif">GIF</option>
+</select>
+
+<button id="downloadBtn" style="display:none;">تحميل</button>
+
 </div>
 
 <div class="footer">
-    تم تطوير الموقع من قبل المطور <a href="https://t.me/Ali_3hme" target="_blank">عـــلـــي ¹</a>
+تم تطوير الموقع من قبل المطور 
+<a href="https://t.me/Ali_3hme" target="_blank">عـــلـــي ¹</a>
 </div>
 
 <script>
-// ------------ نجوم منتظمة ---------------
-const canvas = document.getElementById('starsCanvas');
-const ctx = canvas.getContext('2d');
-let w = canvas.width = window.innerWidth;
-let h = canvas.height = window.innerHeight;
-window.addEventListener('resize', ()=>{ w=canvas.width=window.innerWidth; h=canvas.height=window.innerHeight; });
+// النجوم (ثابتة مرتبة)
+const c=document.getElementById('stars');
+const ctx=c.getContext('2d');
+function resize(){
+c.width=window.innerWidth;
+c.height=window.innerHeight;
+}
+resize();
+window.onresize=resize;
 
-// نجوم على شكل شبكة منتظمة
-const stars=[];
-const rows=10;
-const cols=15;
-for(let i=0;i<rows;i++){
-    for(let j=0;j<cols;j++){
-        stars.push({x: j*(w/cols)+Math.random()*20, y: i*(h/rows)+Math.random()*20, r: Math.random()*1.2+0.8});
-    }
+let stars=[];
+for(let i=0;i<120;i++){
+stars.push({x:(i%20)*80,y:Math.floor(i/20)*80});
 }
 
-function drawStars(){
-    ctx.clearRect(0,0,w,h);
-    ctx.fillStyle='#fff';
-    stars.forEach(s=>{
-        ctx.beginPath();
-        ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
-        ctx.fill();
-        // حركة خفيفة
-        s.x += Math.sin(Date.now()*0.0002)*0.2;
-        s.y += Math.cos(Date.now()*0.0002)*0.2;
-        if(s.x>w)s.x=0;
-        if(s.x<0)s.x=w;
-        if(s.y>h)s.y=0;
-        if(s.y<0)s.y=h;
-    });
-    requestAnimationFrame(drawStars);
+function draw(){
+ctx.clearRect(0,0,c.width,c.height);
+ctx.fillStyle="#fff";
+stars.forEach(s=>{
+ctx.fillRect(s.x,s.y,2,2);
+});
+requestAnimationFrame(draw);
 }
-drawStars();
+draw();
 
-// ------------ مغير أبعاد الصور ---------------
-const dropArea=document.getElementById('dropArea');
-const widthInput=document.getElementById('widthInput');
-const heightInput=document.getElementById('heightInput');
-const outputImage=document.getElementById('outputImage');
-const resetBtn=document.getElementById('resetBtn');
-const downloadBtn=document.getElementById('downloadBtn');
-const formatSelect=document.getElementById('formatSelect');
+// الصور
+let img=null;
+const drop=document.getElementById('dropArea');
+const out=document.getElementById('outputImage');
+const w=document.getElementById('w');
+const h=document.getElementById('h');
+const format=document.getElementById('format');
+const download=document.getElementById('downloadBtn');
+const reset=document.getElementById('resetBtn');
 
-let uploadedImage=null;
-
-// رفع الصورة
-dropArea.addEventListener('click', ()=>{
-    const fileInput=document.createElement('input');
-    fileInput.type='file';
-    fileInput.accept='image/*';
-    fileInput.onchange=()=>handleFile(fileInput.files[0]);
-    fileInput.click();
-});
-dropArea.addEventListener('dragover', e=>{ e.preventDefault(); dropArea.classList.add('hover'); });
-dropArea.addEventListener('dragleave', ()=>dropArea.classList.remove('hover'));
-dropArea.addEventListener('drop', e=>{
-    e.preventDefault();
-    dropArea.classList.remove('hover');
-    if(e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
-});
-
-function handleFile(file){
-    if(!file.type.startsWith('image/')){ alert('اختر صورة فقط'); return; }
-    uploadedImage=new Image();
-    const reader=new FileReader();
-    reader.onload=function(e){
-        uploadedImage.src=e.target.result;
-        uploadedImage.onload=()=>{
-            widthInput.value=uploadedImage.width;
-            heightInput.value=uploadedImage.height;
-            outputImage.src=uploadedImage.src;
-            outputImage.style.display='block';
-            dropArea.style.display='none';
-            resetBtn.style.display='inline-block';
-            downloadBtn.style.display='inline-block';
-            updatePreview();
-        }
-    };
-    reader.readAsDataURL(file);
+drop.onclick=()=>{
+let i=document.createElement('input');
+i.type='file';
+i.accept='image/*';
+i.onchange=e=>load(e.target.files[0]);
+i.click();
 }
 
-// تحديث المعاينة عند تغيير الأبعاد أو الصيغة
-function updatePreview(){
-    if(!uploadedImage)return;
-    const w=parseInt(widthInput.value);
-    const h=parseInt(heightInput.value);
-    if(!w||!h)return;
-    const canvas=document.createElement('canvas');
-    canvas.width=w;
-    canvas.height=h;
-    const ctx=canvas.getContext('2d');
-    ctx.clearRect(0,0,w,h);
-    ctx.drawImage(uploadedImage,0,0,w,h);
-    const format=formatSelect.value;
-    const dataURL=canvas.toDataURL(`image/${format}`);
-    outputImage.src=dataURL;
+function load(file){
+img=new Image();
+let r=new FileReader();
+r.onload=e=>{
+img.src=e.target.result;
+img.onload=()=>{
+out.src=img.src;
+out.style.display="block";
+drop.style.display="none";
+w.value=img.width;
+h.value=img.height;
+download.style.display="block";
+reset.style.display="block";
+update();
+}
+}
+r.readAsDataURL(file);
 }
 
-widthInput.addEventListener('input', updatePreview);
-heightInput.addEventListener('input', updatePreview);
-formatSelect.addEventListener('change', updatePreview);
+function update(){
+if(!img)return;
+let canvas=document.createElement('canvas');
+canvas.width=w.value;
+canvas.height=h.value;
+let ctx=canvas.getContext('2d');
+ctx.drawImage(img,0,0,canvas.width,canvas.height);
+out.src=canvas.toDataURL("image/"+format.value);
+}
 
-// زر تحميل يدوي
-downloadBtn.addEventListener('click', ()=>{
-    const a=document.createElement('a');
-    a.href=outputImage.src;
-    a.download=`resized-image.${formatSelect.value}`;
-    a.click();
-});
+w.oninput=update;
+h.oninput=update;
+format.onchange=update;
 
-// زر إعادة التعيين
-resetBtn.addEventListener('click', ()=>{
-    uploadedImage=null;
-    outputImage.src='';
-    outputImage.style.display='none';
-    widthInput.value='';
-    heightInput.value='';
-    dropArea.style.display='block';
-    resetBtn.style.display='none';
-    downloadBtn.style.display='none';
-});
+download.onclick=()=>{
+let a=document.createElement('a');
+a.href=out.src;
+a.download="image."+format.value;
+a.click();
+}
+
+reset.onclick=()=>{
+img=null;
+out.style.display="none";
+drop.style.display="block";
+download.style.display="none";
+reset.style.display="none";
+}
 </script>
 
 </body>

@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>مغير أبعاد الصور - نسخة احترافية</title>
+<style>
+    /* الخلفية مع النجوم المتحركة */
+    body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: #0a0a23;
+        overflow-x: hidden;
+    }
+    canvas#starsCanvas {
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: -1;
+    }
+
+    .resizer {
+        background: rgba(255,255,255,0.95);
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 4px 25px rgba(0,0,0,0.3);
+        max-width: 450px;
+        margin: 50px auto;
+        text-align: center;
+    }
+    h1 {
+        margin-bottom: 20px;
+        color: #333;
+    }
+    #dropArea {
+        border: 2px dashed #007bff;
+        border-radius: 12px;
+        padding: 20px;
+        cursor: pointer;
+        margin-bottom: 15px;
+        transition: background 0.3s, border-color 0.3s;
+        color: #007bff;
+        font-weight: bold;
+    }
+    #dropArea.hover {
+        background: #e0f0ff;
+        border-color: #0056b3;
+    }
+    input[type="number"], select {
+        width: 45%;
+        padding: 10px;
+        margin: 5px 2%;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+        text-align: center;
+        font-size: 16px;
+    }
+    button {
+        margin-top: 10px;
+        background-color: #007bff;
+        color: #fff;
+        padding: 12px 20px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 16px;
+    }
+    button:hover {
+        background-color: #0056b3;
+    }
+    img {
+        max-width: 100%;
+        margin-top: 15px;
+        border-radius: 8px;
+        display: none;
+    }
+
+    @media (max-width: 500px) {
+        .resizer {
+            width: 90%;
+            padding: 20px;
+        }
+        input[type="number"], select {
+            width: 90%;
+            margin: 5px 0;
+        }
+    }
+</style>
+</head>
+<body>
+
+<canvas id="starsCanvas"></canvas>
+
+<div class="resizer">
+    <h1>مغير أبعاد الصور</h1>
+    <div id="dropArea">اسحب وأسقط الصورة هنا أو اضغط للاختيار</div>
+    <input type="number" id="widthInput" placeholder="العرض (px)">
+    <input type="number" id="heightInput" placeholder="الارتفاع (px)">
+    <br>
+    <select id="formatSelect">
+        <option value="png">PNG</option>
+        <option value="jpeg">JPEG</option>
+        <option value="webp">WebP</option>
+    </select>
+    <br>
+    <button id="resizeBtn">تغيير الأبعاد</button>
+    <button id="downloadBtn" style="display:none;">تحميل الصورة</button>
+    <img id="outputImage" src="" alt="الصورة المعدلة">
+</div>
+
+<script>
+// ------------------- نجوم متحركة -------------------
+const canvas = document.getElementById('starsCanvas');
+const ctx = canvas.getContext('2d');
+let w = canvas.width = window.innerWidth;
+let h = canvas.height = window.innerHeight;
+
+window.addEventListener('resize', () => {
+    w = canvas.width = window.innerWidth;
+    h = canvas.height = window.innerHeight;
+});
+
+const stars = [];
+const numStars = 150;
+for(let i=0;i<numStars;i++){
+    stars.push({
+        x: Math.random()*w,
+        y: Math.random()*h,
+        r: Math.random()*1.5+0.5,
+        d: Math.random()*0.5+0.5
+    });
+}
+
+function drawStars() {
+    ctx.clearRect(0,0,w,h);
+    ctx.fillStyle = '#fff';
+    stars.forEach(s=>{
+        ctx.beginPath();
+        ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+        ctx.fill();
+        s.x += Math.sin(Date.now()*0.0005)*0.5;
+        s.y += Math.cos(Date.now()*0.0005)*0.5;
+        if(s.x> w) s.x = 0;
+        if(s.x<0) s.x = w;
+        if(s.y> h) s.y = 0;
+        if(s.y<0) s.y = h;
+    });
+    requestAnimationFrame(drawStars);
+}
+drawStars();
+
+// ------------------- مغير أبعاد الصور -------------------
+const dropArea = document.getElementById('dropArea');
+const widthInput = document.getElementById('widthInput');
+const heightInput = document.getElementById('heightInput');
+const outputImage = document.getElementById('outputImage');
+const resizeBtn = document.getElementById('resizeBtn');
+const downloadBtn = document.getElementById('downloadBtn');
+const formatSelect = document.getElementById('formatSelect');
+
+let uploadedImage = null;
+let originalWidth = 0;
+let originalHeight = 0;
+
+// رفع الصورة
+dropArea.addEventListener('click', () => {
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'image/*';
+    fileInput.onchange = () => handleFile(fileInput.files[0]);
+    fileInput.click();
+});
+
+dropArea.addEventListener('dragover', e => { e.preventDefault(); dropArea.classList.add('hover'); });
+dropArea.addEventListener('dragleave', () => dropArea.classList.remove('hover'));
+dropArea.addEventListener('drop', e => {
+    e.preventDefault();
+    dropArea.classList.remove('hover');
+    if(e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+});
+
+function handleFile(file){
+    if(!file.type.startsWith('image/')) { alert('اختر صورة فقط'); return; }
+    uploadedImage = new Image();
+    const reader = new FileReader();
+    reader.onload = function(e){
+        uploadedImage.src = e.target.result;
+        uploadedImage.onload = () => {
+            originalWidth = uploadedImage.width;
+            originalHeight = uploadedImage.height;
+            widthInput.value = originalWidth;
+            heightInput.value = originalHeight;
+            outputImage.src = uploadedImage.src;
+            outputImage.style.display = 'block';
+            downloadBtn.style.display = 'none';
+        }
+    };
+    reader.readAsDataURL(file);
+}
+
+// الحفاظ على نسبة الصورة
+widthInput.addEventListener('input', () => {
+    if(uploadedImage && widthInput.value){
+        const ratio = originalHeight/originalWidth;
+        heightInput.value = Math.round(widthInput.value*ratio);
+        livePreview();
+    }
+});
+heightInput.addEventListener('input', () => {
+    if(uploadedImage && heightInput.value){
+        const ratio = originalWidth/originalHeight;
+        widthInput.value = Math.round(heightInput.value*ratio);
+        livePreview();
+    }
+});
+
+// معاينة مباشرة
+function livePreview(){
+    if(!uploadedImage) return;
+    const w = parseInt(widthInput.value);
+    const h = parseInt(heightInput.value);
+    if(!w||!h) return;
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(uploadedImage,0,0,w,h);
+    outputImage.src = canvas.toDataURL('image/png');
+}
+
+// تغيير الأبعاد والتحكم في التحميل
+resizeBtn.addEventListener('click', () => {
+    if(!uploadedImage) { alert('اختر صورة أولاً'); return; }
+    const w = parseInt(widthInput.value);
+    const h = parseInt(heightInput.value);
+    if(!w||!h){ alert('أدخل العرض والارتفاع'); return; }
+    const format = formatSelect.value;
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(uploadedImage,0,0,w,h);
+    const dataURL = canvas.toDataURL(`image/${format}`);
+    outputImage.src = dataURL;
+    downloadBtn.style.display = 'inline-block';
+    downloadBtn.onclick = () => {
+        const a = document.createElement('a');
+        a.href = dataURL;
+        a.download = `resized-image.${format}`;
+        a.click();
+    };
+});
+</script>
+
+</body>
+</html>

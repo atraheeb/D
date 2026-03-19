@@ -3,82 +3,130 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Image Resizer Pro</title>
+<title>Image Resizer</title>
 
 <style>
 body{
     margin:0;
     font-family:Arial;
     background:#0a0a23;
+    overflow-x:hidden;
+}
+
+/* النجوم */
+canvas{
+    position:fixed;
+    top:0;
+    left:0;
+    z-index:-1;
 }
 
 /* الكارد */
 .resizer{
-    background:#fff;
-    padding:20px;
-    border-radius:12px;
-    max-width:400px;
+    background:rgba(255,255,255,0.1);
+    backdrop-filter:blur(10px);
+    border-radius:15px;
+    max-width:420px;
     margin:40px auto;
+    padding:20px;
     text-align:center;
 }
 
-/* الصورة */
+/* حاوية الصورة */
 .image-box{
-    position:relative;
-    display:none;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:250px;
+    margin-bottom:10px;
 }
 
-.image-box img{
-    width:100%;
+/* الصورة */
+#img{
+    max-width:100%;
+    max-height:100%;
+    border:4px solid #00bfff;
     border-radius:10px;
+    display:none;
+    object-fit:contain;
 }
 
-/* الاطار الشفاف */
-.overlay{
-    position:absolute;
-    border:2px dashed red;
-    background:rgba(255,0,0,0.1);
-    pointer-events:none;
+/* اختيار */
+#file{
+    margin:10px 0;
 }
 
 /* مدخلات */
-input{
+input,select{
     width:90%;
     padding:8px;
     margin:5px 0;
+    border-radius:6px;
+    border:none;
+    text-align:center;
 }
 
-/* ازرار */
-button{
-    padding:10px;
-    margin-top:8px;
-    width:90%;
+/* تحميل */
+#download{
+    background:linear-gradient(45deg,#00bfff,#00ff88);
+    color:#fff;
     border:none;
+    padding:10px;
+    width:90%;
     border-radius:6px;
+    margin-top:10px;
     cursor:pointer;
 }
 
-#apply{
-    background:#00bfff;
+/* reset */
+#reset{
+    background:#888;
     color:#fff;
-}
-
-#download{
-    background:#4CAF50;
-    color:#fff;
+    border:none;
+    padding:6px 10px;
+    border-radius:6px;
+    font-size:12px;
+    position:absolute;
+    top:10px;
+    left:10px;
     display:none;
 }
 
+/* footer */
+.footer{
+    text-align:center;
+    color:#fff;
+    margin:20px;
+}
+.footer a{
+    animation:colorChange 3s infinite alternate;
+    text-decoration:none;
+}
+@keyframes colorChange{
+    0%{color:#fff;}
+    50%{color:#4CAF50;}
+    100%{color:#00f;}
+}
+
+/* موبايل */
+@media(max-width:500px){
+    .resizer{
+        width:90%;
+    }
+}
 </style>
 </head>
 
 <body>
 
+<canvas id="stars"></canvas>
+
 <div class="resizer">
 
-<div class="image-box" id="box">
+<button id="reset">Reset</button>
+
+<div class="image-box">
 <img id="img">
-<div class="overlay" id="overlay"></div>
 </div>
 
 <input type="file" id="file">
@@ -86,81 +134,109 @@ button{
 <input type="number" id="w" placeholder="العرض">
 <input type="number" id="h" placeholder="الارتفاع">
 
-<button id="apply">تطبيق الأبعاد</button>
-<button id="download">تحميل</button>
+<select id="format">
+<option value="png">PNG</option>
+<option value="jpeg">JPEG</option>
+<option value="webp">WebP</option>
+<option value="bmp">BMP</option>
+</select>
+
+<button id="download" style="display:none;">تحميل</button>
 
 </div>
 
+<div class="footer">
+تم تطوير الموقع من قبل المطور 
+<a href="https://t.me/Ali_3hme" target="_blank">عـــلـــي ¹</a>
+</div>
+
 <script>
+// النجوم
+const c=document.getElementById('stars');
+const ctx=c.getContext('2d');
+function resize(){
+c.width=window.innerWidth;
+c.height=window.innerHeight;
+}
+resize();
+window.onresize=resize;
+
+let stars=[];
+for(let i=0;i<120;i++){
+stars.push({x:(i%20)*80,y:Math.floor(i/20)*80});
+}
+function draw(){
+ctx.clearRect(0,0,c.width,c.height);
+ctx.fillStyle="#fff";
+stars.forEach(s=>{
+ctx.fillRect(s.x,s.y,2,2);
+});
+requestAnimationFrame(draw);
+}
+draw();
+
+// الصور
 let image=new Image();
-let originalW,originalH;
-
 const img=document.getElementById('img');
-const overlay=document.getElementById('overlay');
-const box=document.getElementById('box');
+const file=document.getElementById('file');
+const w=document.getElementById('w');
+const h=document.getElementById('h');
+const format=document.getElementById('format');
+const download=document.getElementById('download');
+const reset=document.getElementById('reset');
 
-document.getElementById('file').onchange=e=>{
-let file=e.target.files[0];
+file.onchange=e=>{
+let f=e.target.files[0];
 let r=new FileReader();
 r.onload=x=>{
 image.src=x.target.result;
 image.onload=()=>{
-originalW=image.width;
-originalH=image.height;
-
 img.src=image.src;
-box.style.display="block";
+img.style.display="block";
 
-document.getElementById('w').value=originalW;
-document.getElementById('h').value=originalH;
+w.value=image.width;
+h.value=image.height;
 
-updateOverlay();
+download.style.display="block";
+reset.style.display="block";
 }
 }
-r.readAsDataURL(file);
+r.readAsDataURL(f);
 };
 
-// رسم الاطار الشفاف فقط
-function updateOverlay(){
-let w=document.getElementById('w').value;
-let h=document.getElementById('h').value;
-
-let scale=img.clientWidth/originalW;
-
-overlay.style.width=(w*scale)+"px";
-overlay.style.height=(h*scale)+"px";
-overlay.style.top="0";
-overlay.style.left="0";
-}
-
-// تحديث فقط الاطار (بدون تغيير الصورة)
-document.getElementById('w').oninput=updateOverlay;
-document.getElementById('h').oninput=updateOverlay;
-
-// تطبيق فعلي
-document.getElementById('apply').onclick=()=>{
-let w=document.getElementById('w').value;
-let h=document.getElementById('h').value;
+// تحديث مباشر (من الوسط)
+function update(){
+if(!image.src)return;
 
 let canvas=document.createElement('canvas');
-canvas.width=w;
-canvas.height=h;
+canvas.width=w.value;
+canvas.height=h.value;
+
 let ctx=canvas.getContext('2d');
-ctx.drawImage(image,0,0,w,h);
+ctx.drawImage(image,0,0,canvas.width,canvas.height);
 
-img.src=canvas.toDataURL();
+img.src=canvas.toDataURL("image/"+format.value);
+}
 
-document.getElementById('download').style.display="block";
-};
+w.oninput=update;
+h.oninput=update;
+format.onchange=update;
 
 // تحميل
-document.getElementById('download').onclick=()=>{
+download.onclick=()=>{
 let a=document.createElement('a');
 a.href=img.src;
-a.download="image.png";
+a.download="image."+format.value;
 a.click();
 };
 
+// reset
+reset.onclick=()=>{
+img.style.display="none";
+download.style.display="none";
+reset.style.display="none";
+file.value="";
+}
 </script>
 
 </body>

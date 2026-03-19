@@ -53,6 +53,14 @@ input[type="number"], select {
     text-align:center;
     font-size:16px;
 }
+img {
+    max-width:100%;
+    margin-top:15px;
+    border-radius:8px;
+    display:none;
+    border:3px solid #4CAF50;
+    box-sizing:border-box;
+}
 button {
     margin-top:10px;
     background-color:#007bff;
@@ -66,11 +74,21 @@ button {
 button:hover {
     background-color:#0056b3;
 }
-img {
-    max-width:100%;
-    margin-top:15px;
-    border-radius:8px;
-    display:none;
+.footer{
+    text-align:center;
+    color:#fff;
+    margin:30px 0 50px;
+    font-size:14px;
+}
+.footer a{
+    text-decoration:none;
+    font-weight:bold;
+    animation: colorChange 3s infinite alternate;
+}
+@keyframes colorChange {
+    0% { color: white; }
+    50% { color: #4CAF50; }
+    100% { color: #00f; }
 }
 @media(max-width:500px){
     .resizer{
@@ -98,12 +116,16 @@ img {
         <option value="png">PNG</option>
         <option value="jpeg">JPEG</option>
         <option value="webp">WebP</option>
+        <option value="bmp">BMP</option>
+        <option value="gif">GIF</option>
     </select>
     <br>
-    <button id="resizeBtn">تغيير الأبعاد</button>
-    <button id="downloadBtn" style="display:none;">تحميل الصورة</button>
     <button id="resetBtn" style="display:none;">إعادة تعيين</button>
     <img id="outputImage" src="" alt="الصورة المعدلة">
+</div>
+
+<div class="footer">
+    تم تطوير الموقع من قبل المطور <a href="https://t.me/Ali_3hme" target="_blank">عـــلـــي ¹</a>
 </div>
 
 <script>
@@ -116,7 +138,7 @@ window.addEventListener('resize', ()=>{ w=canvas.width=window.innerWidth; h=canv
 const stars=[];
 const numStars=150;
 for(let i=0;i<numStars;i++){
-    stars.push({x:Math.random()*w, y:Math.random()*h, r:Math.random()*1.5+0.5, d:Math.random()*0.5+0.5});
+    stars.push({x:Math.random()*w, y:Math.random()*h, r:Math.random()*1.5+0.5});
 }
 function drawStars(){
     ctx.clearRect(0,0,w,h);
@@ -141,8 +163,6 @@ const dropArea=document.getElementById('dropArea');
 const widthInput=document.getElementById('widthInput');
 const heightInput=document.getElementById('heightInput');
 const outputImage=document.getElementById('outputImage');
-const resizeBtn=document.getElementById('resizeBtn');
-const downloadBtn=document.getElementById('downloadBtn');
 const resetBtn=document.getElementById('resetBtn');
 const formatSelect=document.getElementById('formatSelect');
 
@@ -176,48 +196,42 @@ function handleFile(file){
             outputImage.src=uploadedImage.src;
             outputImage.style.display='block';
             dropArea.style.display='none';
-            downloadBtn.style.display='inline-block';
             resetBtn.style.display='inline-block';
+            autoUpdate();
         }
     };
     reader.readAsDataURL(file);
 }
 
-// معاينة مباشرة بدون تغيير نسبة
-function livePreview(){
-    if(!uploadedImage)return;
+// معاينة تلقائية عند الكتابة أو تغيير الصيغة
+function autoUpdate(){
+    if(!uploadedImage) return;
     const w=parseInt(widthInput.value);
     const h=parseInt(heightInput.value);
-    if(!w||!h)return;
+    if(!w||!h) return;
     const canvas=document.createElement('canvas');
     canvas.width=w;
     canvas.height=h;
     const ctx=canvas.getContext('2d');
     ctx.drawImage(uploadedImage,0,0,w,h);
-    outputImage.src=canvas.toDataURL('image/png');
-}
-
-// زر تغيير الأبعاد
-resizeBtn.addEventListener('click', ()=>{
-    if(!uploadedImage){ alert('اختر صورة أولاً'); return; }
-    const w=parseInt(widthInput.value);
-    const h=parseInt(heightInput.value);
-    if(!w||!h){ alert('أدخل العرض والارتفاع'); return; }
     const format=formatSelect.value;
-    const canvas=document.createElement('canvas');
-    canvas.width=w;
-    canvas.height=h;
-    const ctx=canvas.getContext('2d');
-    ctx.drawImage(uploadedImage,0,0,w,h);
     const dataURL=canvas.toDataURL(`image/${format}`);
     outputImage.src=dataURL;
-    downloadBtn.onclick=()=>{
-        const a=document.createElement('a');
-        a.href=dataURL;
-        a.download=`resized-image.${format}`;
-        a.click();
-    };
-});
+    autoDownload(dataURL);
+}
+
+// تحديث تلقائي عند الكتابة
+widthInput.addEventListener('input', autoUpdate);
+heightInput.addEventListener('input', autoUpdate);
+formatSelect.addEventListener('change', autoUpdate);
+
+// تحميل تلقائي للصورة الحالية
+function autoDownload(dataURL){
+    const a=document.createElement('a');
+    a.href=dataURL;
+    a.download=`resized-image.${formatSelect.value}`;
+    a.click();
+}
 
 // زر إعادة التعيين
 resetBtn.addEventListener('click', ()=>{
@@ -227,7 +241,6 @@ resetBtn.addEventListener('click', ()=>{
     widthInput.value='';
     heightInput.value='';
     dropArea.style.display='block';
-    downloadBtn.style.display='none';
     resetBtn.style.display='none';
 });
 </script>
